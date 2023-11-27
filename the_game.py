@@ -6,7 +6,7 @@ from pygame.sprite import Group
 
 
 def run_game():
-    FPS = 200
+    FPS = 150
     clock = pygame.time.Clock()
     pygame.init()
     settings = Settings()
@@ -22,7 +22,8 @@ def run_game():
         clock.tick(FPS)
         fun.events(gun, settings, screen, bullets)
         gun.update()
-        fun.update_bullets(bullets)
+        fun.update_bullets(settings, screen, gun, army, bullets)
+        fun.update_aliens(settings, screen, gun, army, bullets)
 
         fun.update_screen(screen, settings, gun, bullets, army)
 

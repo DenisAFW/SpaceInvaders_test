@@ -1,4 +1,5 @@
 import sys
+import time
 
 import pygame
 from bullets import Bullets
@@ -47,11 +48,13 @@ def fire_bullet(settings, screen, gun, bullets):
         bullets.add(new_bullet)
 
 
-def update_bullets(bullets):
+def update_bullets(settings, screen, gun, army, bullets):
     for bullet in bullets.copy():
-        bullet.update()
         if bullet.rect.bottom <= 0:
             bullets.remove(bullet)
+            print(len(bullets))
+
+    check_bullet_alien_collision(settings, screen, gun, army, bullets)
 
 
 def create_alien(settings, screen, army, army_number, row_number):
@@ -88,5 +91,30 @@ def get_number_rows(settings, gun_height, alien_height):
     return number_rows
 
 
+def check_army_edges(settings, army):
+    for alien in army.sprites():
+        if alien.check_edges():
+            change_army_direction(settings, army)
+            break
+
+
+def change_army_direction(settings, army):
+    for alien in army.sprites():
+        alien.rect.y += settings.y_drop_distance
+    settings.army_direction *= -1
+
+
+def check_bullet_alien_collision(settings, screen, gun, army, bullets):
+    bullets.update()
+    collision = pygame.sprite.groupcollide(bullets, army, True, True)
+
+    if len(army) == 0:
+        bullets.empty()
+        settings.increase_speed()
+
+        create_fleet(settings, screen, gun, bullets)
+
+
 def update_aliens(settings, screen, gun, army, bullets):
+    check_army_edges(settings, army)
     army.update()
