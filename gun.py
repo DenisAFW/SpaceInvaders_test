@@ -7,7 +7,8 @@ class Gun(Sprite):
         super(Gun, self).__init__()
         self.screen = screen
         self.image = pygame.image.load('images/pixil-frame-0.png')
-        self.image2 = pygame.transform.scale(self.image, (70, 44))
+        self.image2 = pygame.transform.scale(self.image, (settings.gun_height,
+                                                          settings.gun_width))
         self.rect = self.image2.get_rect()
         self.screen_rect = screen.get_rect()
         self.rect.centerx = self.screen_rect.centerx

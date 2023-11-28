@@ -6,17 +6,21 @@ from bullets import Bullets
 from alien import Army
 
 
-def update_screen(screen, settings, gun, bullets, army):
+def update_screen(screen, settings, gun, bullets, army, play_button, stats):
     screen.fill(settings.bg_color)
     for bullet in bullets.sprites():
         bullet.draw_bullet()
     gun.blit_gun()
     army.draw(screen)
 
+    if not stats.game_active:
+        play_button.draw_button()
+
+
     pygame.display.flip()
 
 
-def events(gun, settings, screen, bullets):
+def check_events(gun, army, settings, screen, bullets, play_button, stats):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
@@ -24,6 +28,9 @@ def events(gun, settings, screen, bullets):
             check_keydown_events(event, gun, settings, screen, bullets)
         elif event.type == pygame.KEYUP:
             check_keyup_events(event, gun)
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            check_play_button(gun, army, settings, screen, play_button, bullets, stats, mouse_x, mouse_y)
 
 
 def check_keydown_events(event, gun, settings, screen, bullets):
@@ -48,13 +55,13 @@ def fire_bullet(settings, screen, gun, bullets):
         bullets.add(new_bullet)
 
 
-def update_bullets(settings, screen, gun, army, bullets):
+def update_bullets(settings, screen, gun, army, bullets, stats):
     for bullet in bullets.copy():
         if bullet.rect.bottom <= 0:
             bullets.remove(bullet)
             print(len(bullets))
 
-    check_bullet_alien_collision(settings, screen, gun, army, bullets)
+    check_bullet_alien_collision(settings, screen, gun, army, bullets, stats)
 
 
 def create_alien(settings, screen, army, army_number, row_number):
@@ -104,17 +111,60 @@ def change_army_direction(settings, army):
     settings.army_direction *= -1
 
 
-def check_bullet_alien_collision(settings, screen, gun, army, bullets):
+def check_bullet_alien_collision(settings, screen, gun, army, bullets, stats):
     bullets.update()
-    collision = pygame.sprite.groupcollide(bullets, army, True, True)
+    collisions = pygame.sprite.groupcollide(bullets, army, True, True)
+
+    if collisions:
+        for army in collisions.values():
+            stats.score += settings.alien_points * len(army)
 
     if len(army) == 0:
         bullets.empty()
         settings.increase_speed()
 
-        create_fleet(settings, screen, gun, bullets)
+        create_fleet(settings, screen, gun, army)
+
+
+def check_army_bottom(settings, screen, gun, army, bullets):
+    screen_rect = screen.get_rect()
+    for alien in army.sprites():
+        if alien.rect.bottom >= (screen_rect.bottom - settings.gun_height):
+            pygame.quit()
+
+
+def death_gun(settings, stats, screen, gun, army, bullets):
+    if stats.gun_lives > 0:
+        stats.gun_lives -= 1
+
+        army.empty()
+        bullets.empty()
+        create_fleet(settings, screen, gun, army)
+        gun.center_ship()
+
+    else:
+        stats.game_active = False
+        pygame.mouse.set_visible(True)
+
+
+def check_play_button(gun, army, settings, screen, play_button, bullets, stats, mouse_x, mouse_y):
+    button_clicked = play_button.rect.collidepoint(mouse_x, mouse_y)
+    if button_clicked and not stats.game_active:
+        settings.dynamic_settings()
+        pygame.mouse.set_visible(False)
+        stats.reset_stats()
+        stats.game_active = True
+
+        army.empty()
+        bullets.empty()
+
+        create_fleet(settings, screen, gun, army)
+        gun.center_ship()
 
 
 def update_aliens(settings, screen, gun, army, bullets):
     check_army_edges(settings, army)
     army.update()
+    check_army_bottom(settings, screen, gun, army, bullets)
+    if pygame.sprite.spritecollide(gun, army, True):
+        print("Gun dead")
