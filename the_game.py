@@ -5,6 +5,7 @@ from gun import Gun
 from pygame.sprite import Group
 from game_stats import GameStats
 from button import Button
+from scoreboard import Scoreboard
 
 
 def run_game():
@@ -20,16 +21,18 @@ def run_game():
     army = Group()
     fun.create_fleet(settings, screen, gun, army)
     stats = GameStats(settings)
+    sb = Scoreboard(settings, screen, stats)
     play_button = Button(settings, screen, "Play")
+
 
     while True:
         clock.tick(FPS)
-        fun.check_events(gun, army, settings, screen, bullets, play_button, stats)
+        fun.check_events(gun, army, settings, screen, bullets, play_button, stats, sb)
         if stats.game_active:
             gun.update()
-            fun.update_bullets(settings, screen, gun, army, bullets, stats)
-            fun.update_aliens(settings, screen, gun, army, bullets)
-        fun.update_screen(screen, settings, gun, bullets, army, play_button, stats)
+            fun.update_bullets(settings, screen, gun, army, bullets, stats, sb)
+            fun.update_aliens(settings, screen, gun, army, bullets, stats, sb)
+        fun.update_screen(screen, settings, gun, bullets, army, play_button, stats, sb)
 
 
 run_game()
